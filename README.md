@@ -1,1 +1,1 @@
-# mcp-storybook-bridge
+**[jonbaidev.github.io/mcp-storybook-bridge](https://jonbaidev.github.io/mcp-storybook-bridge)**
