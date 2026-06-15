@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mcp-storybook-bridge — Connect Claude to your Storybook</title>
+<meta name="description" content="MCP server that gives Claude direct access to your Storybook. Browse components, generate story variants, and audit accessibility from your AI chat.">
+<meta property="og:title" content="mcp-storybook-bridge">
+<meta property="og:description" content="Connect Claude to your Storybook via Model Context Protocol.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0f12;
+  --surface:#13161b;
+  --surface2:#1a1e25;
+  --border:#262b34;
+  --border2:#313742;
+  --text:#e8eaf0;
+  --muted:#6b7280;
+  --purple:#8b7cf8;
+  --purple-dim:#2d2654;
+  --teal:#2dd4bf;
+  --teal-dim:#0d3330;
+  --green:#4ade80;
+  --amber:#fbbf24;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Inter',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--purple);text-decoration:none}
+a:hover{text-decoration:underline}
+.wrap{max-width:860px;margin:0 auto;padding:0 24px}
+
+nav{border-bottom:1px solid var(--border);padding:16px 0}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.nav-logo{font-family:var(--mono);font-size:14px;font-weight:500;color:var(--text)}
+.nav-logo span{color:var(--purple)}
+.nav-links{display:flex;gap:20px;font-size:13px}
+.nav-links a{color:var(--muted)}
+.nav-links a:hover{color:var(--text);text-decoration:none}
+.badge-npm{background:#cc3534;color:#fff;font-size:11px;font-weight:500;padding:2px 8px;border-radius:4px;font-family:var(--mono)}
+
+.hero{padding:72px 0 56px;text-align:center}
+.eyebrow{display:inline-flex;align-items:center;gap:6px;background:var(--purple-dim);color:var(--purple);font-size:12px;font-weight:500;padding:4px 12px;border-radius:20px;border:1px solid #3d2d8a;margin-bottom:24px;font-family:var(--mono)}
+.eyebrow::before{content:'';width:6px;height:6px;background:var(--purple);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+h1{font-size:clamp(28px,5vw,48px);font-weight:600;letter-spacing:-0.03em;line-height:1.15;margin-bottom:16px}
+h1 em{font-style:normal;color:var(--purple)}
+.hero-sub{font-size:17px;color:var(--muted);max-width:520px;margin:0 auto 36px;line-height:1.6}
+.cta-row{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;font-family:var(--sans);text-decoration:none}
+.btn-primary{background:var(--purple);color:#fff}
+.btn-primary:hover{background:#7c6ef0;text-decoration:none}
+.btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border2)}
+.btn-ghost:hover{background:var(--surface2);text-decoration:none}
+.install-line{font-family:var(--mono);font-size:13px;color:var(--muted);background:var(--surface);border:1px solid var(--border);padding:10px 18px;border-radius:8px;display:inline-flex;align-items:center;gap:10px}
+.install-line .dollar{color:var(--teal)}
+.install-line .cmd{color:var(--text)}
+
+.section{padding:56px 0}
+.section-label{font-size:12px;font-weight:500;color:var(--purple);letter-spacing:.08em;text-transform:uppercase;font-family:var(--mono);margin-bottom:10px}
+.section-title{font-size:26px;font-weight:600;letter-spacing:-0.02em;margin-bottom:8px}
+.section-sub{color:var(--muted);font-size:15px;margin-bottom:36px}
+
+.terminal{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:48px}
+.terminal-bar{background:var(--surface2);padding:10px 16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
+.dot{width:10px;height:10px;border-radius:50%}
+.dot-r{background:#ff5f57}.dot-y{background:#ffbd2e}.dot-g{background:#28c840}
+.terminal-title{font-size:12px;color:var(--muted);font-family:var(--mono);margin-left:auto;margin-right:auto}
+.terminal-body{padding:20px 24px;font-family:var(--mono);font-size:13px;line-height:1.8}
+.t-prompt{color:var(--teal)}
+.t-user{color:var(--text)}
+.t-label{color:var(--muted)}
+.t-tool{color:var(--amber)}
+.t-out{color:var(--green)}
+.t-code{color:var(--purple)}
+.cursor{display:inline-block;width:8px;height:14px;background:var(--teal);vertical-align:middle;animation:blink .9s step-end infinite;margin-left:2px}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+.demo-tabs{display:flex;gap:4px;padding:12px 16px 0;background:var(--surface2);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.demo-tab{font-family:var(--mono);font-size:12px;padding:6px 14px;border-radius:6px 6px 0 0;cursor:pointer;color:var(--muted);background:transparent;border:none}
+.demo-tab.active{background:var(--surface);color:var(--text);border:1px solid var(--border);border-bottom:1px solid var(--surface)}
+.demo-panel{display:none}.demo-panel.active{display:block}
+
+.tools-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.tool-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 22px;transition:border-color .15s}
+.tool-card:hover{border-color:var(--border2)}
+.tool-name{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--purple);margin-bottom:6px}
+.tool-desc{font-size:13px;color:var(--muted);line-height:1.5}
+
+.setup-steps{display:flex;flex-direction:column}
+.step{display:flex;gap:20px;padding:20px 0;border-bottom:1px solid var(--border)}
+.step:last-child{border-bottom:none}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--purple-dim);border:1px solid #3d2d8a;color:var(--purple);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;font-family:var(--mono)}
+.step-content h3{font-size:15px;font-weight:500;margin-bottom:4px}
+.step-content p{font-size:13px;color:var(--muted);line-height:1.6}
+code{font-family:var(--mono);font-size:12px;background:var(--surface2);padding:2px 6px;border-radius:4px}
+pre{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;font-family:var(--mono);font-size:12px;color:var(--text);overflow-x:auto;margin-top:10px;white-space:pre;line-height:1.7}
+
+footer{border-top:1px solid var(--border);padding:32px 0;text-align:center;font-size:13px;color:var(--muted)}
+footer a{color:var(--muted)}
+footer a:hover{color:var(--text)}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap nav-inner">
+    <span class="nav-logo"><span>@jonbai/</span>mcp-storybook-bridge</span>
+    <div class="nav-links">
+      <a href="#tools">Tools</a>
+      <a href="#setup">Setup</a>
+      <a href="https://github.com/jonbai/mcp-storybook-bridge" target="_blank">GitHub</a>
+      <a href="https://www.npmjs.com/package/@jonbai/mcp-storybook-bridge" target="_blank"><span class="badge-npm">npm</span></a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <div class="hero">
+    <div class="eyebrow">MCP Server &middot; v0.1.0</div>
+    <h1>Connect <em>Claude</em> to<br>your Storybook</h1>
+    <p class="hero-sub">Browse components, generate story variants, and audit accessibility &mdash; all from your AI chat. No copy-pasting. No context-switching.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="https://github.com/jonbai/mcp-storybook-bridge" target="_blank">View on GitHub</a>
+      <a class="btn btn-ghost" href="#setup">Get started</a>
+    </div>
+    <div class="install-line">
+      <span class="dollar">$</span>
+      <span class="cmd">npm install -g @jonbai/mcp-storybook-bridge</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Live demo</div>
+    <div class="section-title">See it in action</div>
+    <p class="section-sub">What a conversation with Claude looks like after connecting the server.</p>
+
+    <div class="terminal">
+      <div class="terminal-bar">
+        <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        <span class="terminal-title">Claude Desktop &middot; Storybook connected</span>
+      </div>
+      <div class="demo-tabs">
+        <button class="demo-tab active" onclick="showDemo(0)">list_components</button>
+        <button class="demo-tab" onclick="showDemo(1)">generate_variant</button>
+        <button class="demo-tab" onclick="showDemo(2)">audit_accessibility</button>
+      </div>
+      <div class="terminal-body">
+
+        <div class="demo-panel active" id="demo-0">
+<span class="t-prompt">You</span>&nbsp;&nbsp;<span class="t-user">List all Button stories in my design system</span>
+
+<span class="t-label">── calling</span> <span class="t-tool">list_components</span> <span class="t-label">{ filter: "button" }</span>
+
+<span class="t-label">Claude</span>&nbsp;&nbsp;<span class="t-out">Found 6 stories under components/Button:</span>
+
+&nbsp;&nbsp;<span class="t-out">1. components-button--primary&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Primary</span>
+&nbsp;&nbsp;<span class="t-out">2. components-button--secondary&nbsp;&nbsp;&nbsp;Secondary</span>
+&nbsp;&nbsp;<span class="t-out">3. components-button--destructive&nbsp;&nbsp;Destructive</span>
+&nbsp;&nbsp;<span class="t-out">4. components-button--ghost&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ghost</span>
+&nbsp;&nbsp;<span class="t-out">5. components-button--loading&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Loading</span>
+&nbsp;&nbsp;<span class="t-out">6. components-button--disabled&nbsp;&nbsp;&nbsp;&nbsp;Disabled</span>
+<span class="cursor"></span>
+        </div>
+
+        <div class="demo-panel" id="demo-1">
+<span class="t-prompt">You</span>&nbsp;&nbsp;<span class="t-user">Generate a Button variant: outline style, icon left, loading state</span>
+
+<span class="t-label">── calling</span> <span class="t-tool">get_component_story</span> <span class="t-label">{ storyId: "components-button--primary" }</span>
+<span class="t-label">── calling</span> <span class="t-tool">generate_variant</span> <span class="t-label">{ description: "outline, icon left, loading" }</span>
+
+<span class="t-label">Claude</span>&nbsp;&nbsp;<span class="t-out">Here's the variant &mdash; ready to paste into your stories file:</span>
+
+<span class="t-code">/** Outline button with left icon and loading state */</span>
+<span class="t-code">export const OutlineWithIconLoading: StoryObj&lt;typeof Button&gt; = {</span>
+<span class="t-code">&nbsp;&nbsp;args: {</span>
+<span class="t-code">&nbsp;&nbsp;&nbsp;&nbsp;variant: 'outline',</span>
+<span class="t-code">&nbsp;&nbsp;&nbsp;&nbsp;leftIcon: &lt;ArrowRight size={16} /&gt;,</span>
+<span class="t-code">&nbsp;&nbsp;&nbsp;&nbsp;isLoading: true,</span>
+<span class="t-code">&nbsp;&nbsp;&nbsp;&nbsp;children: 'Continue',</span>
+<span class="t-code">&nbsp;&nbsp;},</span>
+<span class="t-code">};</span><span class="cursor"></span>
+        </div>
+
+        <div class="demo-panel" id="demo-2">
+<span class="t-prompt">You</span>&nbsp;&nbsp;<span class="t-user">Audit accessibility on Form/Input--required</span>
+
+<span class="t-label">── calling</span> <span class="t-tool">audit_accessibility</span> <span class="t-label">{ storyId: "form-input--required" }</span>
+
+<span class="t-label">Claude</span>&nbsp;&nbsp;<span class="t-out">&#9888;  2 violations found in "form-input--required"</span>
+
+&nbsp;&nbsp;<span class="t-out">[serious]&nbsp;&nbsp;color-contrast</span>
+&nbsp;&nbsp;<span class="t-label">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Label text is 3.2:1 &mdash; needs 4.5:1 (WCAG AA).</span>
+&nbsp;&nbsp;<span class="t-label">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Fix: increase label color from #9ca3af &rarr; #6b7280</span>
+
+&nbsp;&nbsp;<span class="t-out">[critical]&nbsp;label</span>
+&nbsp;&nbsp;<span class="t-label">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Input missing associated label element.</span>
+&nbsp;&nbsp;<span class="t-label">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Fix: add htmlFor/id pairing or aria-label</span>
+<span class="cursor"></span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="tools">
+    <div class="section-label">API</div>
+    <div class="section-title">5 tools included</div>
+    <p class="section-sub">Everything Claude needs to work with your component library.</p>
+    <div class="tools-grid">
+      <div class="tool-card">
+        <div class="tool-name">list_components</div>
+        <div class="tool-desc">Lists all stories from the Storybook index with optional keyword filter.</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-name">get_component_story</div>
+        <div class="tool-desc">Returns full story definition — args, argTypes, tags, and import path.</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-name">generate_variant</div>
+        <div class="tool-desc">Generates a CSF3 TypeScript story from a natural language description.</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-name">audit_accessibility</div>
+        <div class="tool-desc">Runs a11y audit via addon-a11y and returns violations with fix suggestions.</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-name">search_components</div>
+        <div class="tool-desc">Fuzzy-searches components by name, tag, or description across the index.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="setup">
+    <div class="section-label">Setup</div>
+    <div class="section-title">Ready in 2 minutes</div>
+    <p class="section-sub">Works with Claude Desktop and Claude Code out of the box.</p>
+    <div class="setup-steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h3>Install the package</h3>
+          <p>Install globally via npm.</p>
+          <pre>npm install -g @jonbai/mcp-storybook-bridge</pre>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h3>Add to Claude Desktop config</h3>
+          <p>Edit <code>claude_desktop_config.json</code> and add the server block:</p>
+          <pre>{
+  "mcpServers": {
+    "storybook": {
+      "command": "npx",
+      "args": ["-y", "@jonbai/mcp-storybook-bridge"],
+      "env": {
+        "STORYBOOK_URL": "http://localhost:6006",
+        "ANTHROPIC_API_KEY": "sk-ant-..."
+      }
+    }
+  }
+}</pre>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h3>Start Storybook and restart Claude</h3>
+          <p>Run your Storybook on port 6006, then restart Claude Desktop. The 5 tools appear automatically.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <h3>Or use with Claude Code</h3>
+          <pre>claude mcp add storybook npx @jonbai/mcp-storybook-bridge \
+  -e STORYBOOK_URL=http://localhost:6006 \
+  -e ANTHROPIC_API_KEY=sk-ant-...</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    <p>
+      Built by <a href="https://linkedin.com/in/jonathan-sun-ho-bai" target="_blank">Jonathan Bai</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://github.com/jonbai/mcp-storybook-bridge" target="_blank">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://www.npmjs.com/package/@jonbai/mcp-storybook-bridge" target="_blank">npm</a>
+      &nbsp;&middot;&nbsp;
+      MIT License
+    </p>
+  </div>
+</footer>
+
+<script>
+function showDemo(i) {
+  document.querySelectorAll('.demo-tab').forEach(function(t, j) {
+    t.classList.toggle('active', j === i);
+  });
+  document.querySelectorAll('.demo-panel').forEach(function(p, j) {
+    p.classList.toggle('active', j === i);
+  });
+}
+</script>
+</body>
+</html>

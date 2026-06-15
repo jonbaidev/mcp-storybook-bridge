@@ -1,12 +1,50 @@
 {
-  "name": "mcp-storybook-bridge",
-  "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "name": "@jonbai/mcp-storybook-bridge",
+  "version": "0.1.0",
+  "description": "MCP server that connects Claude to your Storybook — list components, generate variants, audit accessibility",
+  "main": "dist/index.js",
+  "bin": {
+    "mcp-storybook-bridge": "dist/index.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": ""
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "storybook",
+    "claude",
+    "ai",
+    "design-system",
+    "accessibility",
+    "a11y",
+    "frontend",
+    "model-context-protocol"
+  ],
+  "author": "Jonathan Bai <jonathan.bai@hotmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "axios": "^1.7.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jonbai/mcp-storybook-bridge"
+  },
+  "homepage": "https://github.com/jonbai/mcp-storybook-bridge#readme",
+  "bugs": {
+    "url": "https://github.com/jonbai/mcp-storybook-bridge/issues"
+  }
 }
